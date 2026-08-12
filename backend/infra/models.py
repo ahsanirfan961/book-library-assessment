@@ -75,10 +75,6 @@ class Edition(Base):
 
     cover_id: Mapped[Optional[int]] = mapped_column(Integer)
     ol_edition_key: Mapped[str] = mapped_column(Text, nullable=False)
-    publisher: Mapped[Optional[str]] = mapped_column(Text)
-    publish_year: Mapped[Optional[int]] = mapped_column(SmallInteger)
-    publish_date: Mapped[Optional[str]] = mapped_column(Text)
-    pages: Mapped[Optional[int]] = mapped_column(Integer)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default_factory=datetime.now)
     book: Mapped["Book"] = relationship(back_populates="editions")
     isbns: Mapped[list[Isbn]] = relationship(back_populates="edition")
@@ -136,7 +132,6 @@ class Book(Base):
     subtitle: Mapped[Optional[str]] = mapped_column(Text)
     description: Mapped[Optional[str]] = mapped_column(Text)
     cover_id: Mapped[Optional[int]] = mapped_column(Integer)
-    first_publish_year: Mapped[Optional[int]] = mapped_column(SmallInteger)
     language: Mapped[Optional[str]] = mapped_column(CHAR(3))
     edition_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     popularity: Mapped[float] = mapped_column(Float, nullable=False, server_default="0")
@@ -162,7 +157,7 @@ class Book(Base):
     )
     editions: Mapped[list[Edition]] = relationship(
         back_populates="book",
-        order_by="Edition.publish_year.desc().nullslast()",
+      
     )
     isbns: Mapped[list[Isbn]] = relationship(back_populates="book")
     subjects: Mapped[list[Subject]] = relationship(
@@ -170,7 +165,7 @@ class Book(Base):
         back_populates="books",
     )
     rating: Mapped[Optional[Rating]] = relationship(back_populates="book", uselist=False)
-    enrichment: Mapped[Optional[EnrichmentQueue]] = relationship(back_populates="book", uselist=False)
+    enrichment: Mapped[Optional["EnrichmentQueue"]] = relationship(back_populates="book", uselist=False)
 
 
 class BookAuthor(Base):

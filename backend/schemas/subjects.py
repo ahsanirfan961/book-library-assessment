@@ -9,8 +9,6 @@ from backend.schemas.books import SubjectRef
 
 class Subject(SubjectRef):
     bookCount: int
-    illustrationKey: Optional[str] = None
-
 
 
 class SubjectListResponse(BaseModel):

@@ -26,7 +26,6 @@ class EditionSummary(BaseModel):
 class BookSummary(BaseModel):
     id: str
     title: str
-    subtitle: Optional[str] = None
     authors: List[Author]
     firstPublishYear: Optional[int] = None
     coverUrl: Optional[str] = None
