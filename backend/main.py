@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
+from backend.api import books, subjects
 from backend.infra.db import engine
 from backend.infra.models import Base
 
@@ -14,7 +15,15 @@ async def lifespan(app: FastAPI):
    
     await engine.dispose()
 
-app = FastAPI()
+
+app = FastAPI(lifespan=lifespan)
+
+api = FastAPI()
+api.include_router(books.router)
+api.include_router(subjects.router)
+
+
+app.mount("/api/v1", api)
 
 
 
