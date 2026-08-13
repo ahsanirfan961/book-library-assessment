@@ -60,7 +60,6 @@ class EnrichmentQueue(Base):
     __tablename__ = "enrichment_queue"
 
     book_id: Mapped[int] = mapped_column(ForeignKey("ratings.book_id"), primary_key=True)
-    priority: Mapped[float] = mapped_column(Float, nullable=False, server_default="0")
     enqueued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     attempts: Mapped[int] = mapped_column(SmallInteger, nullable=False, server_default="0")
     last_error: Mapped[Optional[str]] = mapped_column(Text)
