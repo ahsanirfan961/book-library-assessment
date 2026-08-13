@@ -7,7 +7,7 @@ from backend.infra.open_library.client import OpenLibraryClient, get_ol_http_cli
 from backend.schemas.books import Book
 from backend.schemas.common import Paginated
 from backend.schemas.subjects import Subject
-from backend.services.books import OLBookService
+from backend.services.rated_book import RatedBookService
 
 
 router = APIRouter(prefix="/subjects", tags=["subjects"])
@@ -37,4 +37,4 @@ async def subject_books(
     limit: int = 12,
     offset: int = 0,
 ):
-    return await OLBookService(db, OpenLibraryClient(ol_http_client)).get_books(slug, limit, offset)
+    return await RatedBookService(db, OpenLibraryClient(ol_http_client)).get_books(slug, limit, offset)
