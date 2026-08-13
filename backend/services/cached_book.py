@@ -24,9 +24,9 @@ class CachedBookService(ABookService):
         try:
             books = await self.redis.get(f"books:{subject}:{limit}:{offset}")
             if books:
-                return books
+                return Paginated[Book].model_validate_json(books)
             books = await self.book_service.get_books(subject, limit, offset)
-            await self.redis.set(f"books:{subject}:{limit}:{offset}", books)
+            await self.redis.set(f"books:{subject}:{limit}:{offset}", books.model_dump_json())
             return books
 
         except Exception as e:
@@ -36,9 +36,9 @@ class CachedBookService(ABookService):
         try:
             books = await self.redis.get(f"search_books:{query}:{limit}:{offset}")
             if books:
-                return books
+                return Paginated[Book].model_validate_json(books)
             books = await self.book_service.search_books(query, limit, offset)
-            await self.redis.set(f"search_books:{query}:{limit}:{offset}", books)
+            await self.redis.set(f"search_books:{query}:{limit}:{offset}", books.model_dump_json())
             return books
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
@@ -47,9 +47,9 @@ class CachedBookService(ABookService):
         try:
             book = await self.redis.get(f"book:{book_id}")
             if book:
-                return book
+                return BookDetail.model_validate_json(book)
             book = await self.book_service.get_book_detail(book_id)
-            await self.redis.set(f"book:{book_id}", book)
+            await self.redis.set(f"book:{book_id}", book.model_dump_json())
             return book
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
@@ -58,9 +58,9 @@ class CachedBookService(ABookService):
         try:
             books = await self.redis.get(f"popular_books:{limit}:{offset}")
             if books:
-                return books
+                return Paginated[Book].model_validate_json(books)
             books = await self.book_service.get_popular_books(limit, offset)
-            await self.redis.set(f"popular_books:{limit}:{offset}", books)
+            await self.redis.set(f"popular_books:{limit}:{offset}", books.model_dump_json())
             return books
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
