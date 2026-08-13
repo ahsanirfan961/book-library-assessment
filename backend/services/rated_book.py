@@ -1,9 +1,8 @@
-
-
 from abc import ABC
 from typing import List
 from fastapi.exceptions import HTTPException
-from sqlalchemy import insert, select
+from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
 from backend.infra.db import AsyncSession
 from backend.infra.google_books.client import GoogleBooksClient
 from backend.infra.models import EnrichmentQueue, Rating as RatingModel
@@ -14,13 +13,11 @@ from backend.schemas.books import BookDetail, Book, Rating
 from backend.schemas.common import Paginated
 from backend.services.a_book import ABookService
 
-
-
 class RatedBookService(ABookService):
-    def __init__(self,book_service: ABookService, db: AsyncSession,  google_books_client: GoogleBooksClient) -> None:
+    def __init__(self, db: AsyncSession, open_library_client: OpenLibraryClient) -> None:
+        from backend.services.ol_book import OLBookService
         self.db = db
-        self.book_service = book_service
-        self.open_library_client = google_books_client
+        self.book_service = OLBookService(db, open_library_client)
     
     async def enqueue_books_for_enrichment(self, books: List[Book]) -> None:
         if not books:
@@ -33,41 +30,33 @@ class RatedBookService(ABookService):
         )
         await self.db.execute(stmt)
         await self.db.commit()
-  
 
     def attach_rating(self, book: Book, rating: RatingModel) -> Book:
         rating, rating_status = map_rating(rating)
         return book.model_copy(update={"rating": rating, "ratingStatus": rating_status})
 
     def attach_ratings(self, books: List[Book], ratings: List[RatingModel]) -> List[Book]:
+        rating_map = {rating.book_id: rating for rating in ratings}
         return [
-            self.attach_rating(book, rating)
+            self.attach_rating(book, rating_map.get(book.id))
             for book in books
-            for rating in ratings
-            if rating.book_id == book.id
         ]
-
-    
     async def get_books(self, subject: str, limit: int = 10, offset: int = 0) -> Paginated[Book]:
         try:
             books = (await self.book_service.get_books(subject, limit, offset)).items
-
             book_ids = [book.id for book in books]
-
             stat = select(RatingModel).where(RatingModel.book_id.in_(book_ids))
-            ratings = await self.db.execute(stat).scalars().all()
-
+            ratings = (await self.db.execute(stat)).scalars().all()
             books_missing_ratings = [book for book in books if book.id not in book_ids]
 
             await self.enqueue_books_for_enrichment(books_missing_ratings)
-
             books = self.attach_ratings(books, ratings)
 
             return Paginated(
                 limit=limit,
                 offset=offset,
                 total=len(books),
-                items=[to_book_summary(book) for book in books]
+                items=books
             )
 
         except Exception as e:
@@ -76,23 +65,19 @@ class RatedBookService(ABookService):
     async def search_books(self, query: str, limit: int = 10, offset: int = 0) -> Paginated[Book]:
         try:
             books = (await self.book_service.search_books(query, limit, offset)).items
-
             book_ids = [book.id for book in books]
-
             stat = select(RatingModel).where(RatingModel.book_id.in_(book_ids))
-            ratings = await self.db.execute(stat).scalars().all()
-
+            ratings = (await self.db.execute(stat)).scalars().all()
             books_missing_ratings = [book for book in books if book.id not in [rating.book_id for rating in ratings]]
-
+            
             await self.enqueue_books_for_enrichment(books_missing_ratings)
-
             books = self.attach_ratings(books, ratings)
 
             return Paginated(
                 limit=limit,
                 offset=offset,
                 total=len(books),
-                items=[to_book_summary(book) for book in books]
+                items=books
             )
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
@@ -102,7 +87,7 @@ class RatedBookService(ABookService):
             book = await self.book_service.get_book_detail(book_id)
 
             stat = select(RatingModel).where(RatingModel.book_id == book_id)
-            rating = await self.db.execute(stat).scalar_one_or_none()
+            rating = (await self.db.execute(stat)).scalar_one_or_none()
 
             book = self.attach_rating(book, rating)
 
@@ -116,15 +101,15 @@ class RatedBookService(ABookService):
 
             book_ids = [book.id for book in books]
             stat = select(RatingModel).where(RatingModel.book_id.in_(book_ids))
-            ratings = await self.db.execute(stat).scalars().all()
+            
+            ratings = (await self.db.execute(stat)).scalars().all()
+
 
             books_missing_ratings = [book for book in books if book.id not in book_ids]
             await self.enqueue_books_for_enrichment(books_missing_ratings)
             books = self.attach_ratings(books, ratings)
-            return Paginated(limit=limit, offset=offset, total=len(books), items=[to_book_summary(book) for book in books])
+            
+            return Paginated(limit=limit, offset=offset, total=len(books), items=books)
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
-
-
-
 
