@@ -23,6 +23,9 @@ class ABookService(ABC):
     
     async def get_book_detail(self, book_id: str) -> BookDetail:
         return await self.book_service.get_book_detail(book_id)
+    
+    async def get_popular_books(self, limit: int = 6, offset: int = 0) -> Paginated[Book]:
+        return await self.book_service.get_popular_books(limit, offset)
 
 class OLBookService(ABookService):
     def __init__(self, db: AsyncSession, open_library_client: OpenLibraryClient) -> None:
@@ -57,6 +60,18 @@ class OLBookService(ABookService):
         try:
             work = await self.open_library_client.get_work(book_id)
             return to_book_detail(work)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    
+    async def get_popular_books(self, limit: int = 6, offset: int = 0) -> Paginated[Book]:
+        try:
+            works = await self.open_library_client.get_popular_books(limit, offset)
+            return Paginated(
+                limit=limit,
+                offset=offset,
+                total=works.total,
+                items=[to_book_summary(work) for work in works.items]
+            )
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 

@@ -20,24 +20,29 @@ router = APIRouter(prefix="/books", tags=["books"])
 async def search(
     response: Response,
     db: Annotated[AsyncSession, Depends(get_db)],
+    ol_http_client: Annotated[httpx.AsyncClient, Depends(get_ol_http_client)],
     q: str,
-    subject: Optional[str] = None,
-    cursor: Optional[str]= None,
     limit: int = 24,
+    offset: int = 0,
 ):
-    pass
+    book_service = OLBookService(db, OpenLibraryClient(ol_http_client))
+    return await book_service.search_books(q, limit, offset)
 
 
 @router.get("/popular", response_model=Paginated[Book])
 async def popular(
     response: Response,
     db: Annotated[AsyncSession, Depends(get_db)],
+    ol_http_client: Annotated[httpx.AsyncClient, Depends(get_ol_http_client)],
     limit: int = 6,
+    offset: int = 0,
 ):
-    pass
+    book_service = OLBookService(db, OpenLibraryClient(ol_http_client))
+    return await book_service.get_popular_books(limit, offset)
 
 @router.get("/{book_id}", response_model=BookDetail)
 async def book_detail(
+    response: Response,
     book_id: str,  
     db: Annotated[AsyncSession, Depends(get_db)],
     ol_http_client: Annotated[httpx.AsyncClient, Depends(get_ol_http_client)],

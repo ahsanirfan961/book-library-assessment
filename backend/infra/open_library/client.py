@@ -33,15 +33,15 @@ class OpenLibraryClient:
                 items=[Work.model_validate(work) for work in res["works"]]
         ))
     
-    async def search_books(self, query: str) -> Paginated[Work]:
-        url = f"{self.base_url}/search/books.json"
-        response = await self.http_client.get(url, params={"q": query})
+    async def search_books(self, query: str, limit: int = 10, offset: int = 0) -> Paginated[Work]:
+        url = f"{self.base_url}/search.json"
+        response = await self.http_client.get(url, params={"q": query, "limit": limit, "offset": offset})
         response.raise_for_status()
         res = response.json()
         return Paginated(
-            limit=res["limit"],
-            offset=res["offset"],
-            total=res["total"],
+            limit=limit,
+            offset=offset,
+            total=res["num_found"],
             items=[Work.model_validate(work) for work in res["docs"]]
         )
     
@@ -50,3 +50,15 @@ class OpenLibraryClient:
         response = await self.http_client.get(url)
         response.raise_for_status()
         return Work.model_validate(response.json())
+    
+    async def get_popular_books(self, limit: int = 6, offset: int = 0) -> Paginated[Work]:
+        url = f"{self.base_url}/trending/weekly.json"
+        response = await self.http_client.get(url, params={"limit": limit, "offset": offset})
+        response.raise_for_status()
+        res = response.json()
+        return Paginated(
+            limit=res["limit"],
+            offset=res["offset"],
+            total=res["total"],
+            items=[Work.model_validate(work) for work in res["docs"]]
+        )
