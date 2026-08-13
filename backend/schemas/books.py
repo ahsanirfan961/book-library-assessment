@@ -43,6 +43,5 @@ class BookDetail(Book):
     description: Optional[str] = None
     coverUrlLarge: Optional[str] = None
     subjects: list[SubjectRef] = Field(default_factory=list)
-    editions: list[Edition] = Field(default_factory=list, max_length=5)
 
 

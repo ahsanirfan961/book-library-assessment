@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from backend.api import books, subjects
+from backend.infra.cache import RedisStorage
 from backend.infra.db import engine
 from backend.infra.models import Base
 
@@ -11,6 +12,9 @@ async def lifespan(app: FastAPI):
     
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    
+    await RedisStorage().test_connection()
+    
     yield
    
     await engine.dispose()

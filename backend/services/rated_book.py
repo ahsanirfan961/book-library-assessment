@@ -17,10 +17,10 @@ from backend.services.a_book import ABookService
 
 
 class RatedBookService(ABookService):
-    def __init__(self,book_service: ABookService, db: AsyncSession,  google_books_client: GoogleBooksClient) -> None:
+    def __init__(self,book_service: ABookService, db: AsyncSession) -> None:
         self.db = db
         self.book_service = book_service
-        self.open_library_client = google_books_client
+        
     
     async def enqueue_books_for_enrichment(self, books: List[Book]) -> None:
         if not books:
@@ -28,7 +28,7 @@ class RatedBookService(ABookService):
 
         stmt = (
             insert(EnrichmentQueue)
-            .values([{"book_id": book.id} for book in books])
+            .values([{"book_id": book.id, "isbn": book.} for book in books])
             .on_conflict_do_nothing(index_elements=["book_id"])
         )
         await self.db.execute(stmt)
