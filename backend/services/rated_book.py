@@ -5,7 +5,7 @@ from fastapi.exceptions import HTTPException
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from backend.infra.db import AsyncSession
-from backend.infra.models import EnrichmentQueue, Rating as RatingModel, RatingStatus as DbRatingStatus
+from backend.infra.models import EnrichmentQueue, Rating as RatingModel
 from backend.mappers.books import map_rating
 from backend.schemas.books import BookDetail, Book
 from backend.schemas.common import Paginated
@@ -33,27 +33,20 @@ class RatedBookService(ABookService):
         if not missing:
             return
 
-        no_isbn = [book for book in missing if not book.isbn]
-        with_isbn = [book for book in missing if book.isbn]
-
-        if no_isbn:
-            stmt = (
-                insert(RatingModel)
-                .values([
-                    {"book_id": book.id, "status": DbRatingStatus.no_match, "ratings_count": 0}
-                    for book in no_isbn
-                ])
-                .on_conflict_do_nothing(index_elements=["book_id"])
-            )
-            await self.db.execute(stmt)
-
-        if with_isbn:
-            stmt = (
-                insert(EnrichmentQueue)
-                .values([{"book_id": book.id, "isbn": book.isbn} for book in with_isbn])
-                .on_conflict_do_nothing(index_elements=["book_id"])
-            )
-            await self.db.execute(stmt)
+        stmt = (
+            insert(EnrichmentQueue)
+            .values([
+                {
+                    "book_id": book.id,
+                    "isbn": book.isbn,
+                    "title": book.title,
+                    "author": book.authors[0].name if book.authors else None,
+                }
+                for book in missing
+            ])
+            .on_conflict_do_nothing(index_elements=["book_id"])
+        )
+        await self.db.execute(stmt)
 
         await self.db.commit()
 

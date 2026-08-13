@@ -36,4 +36,17 @@ class GoogleBooksClient:
 
         return Volume.model_validate(res["items"][0])
 
-    
+    async def search_by_title_author(self, title: str, author: str) -> Volume:
+        q = f"intitle:{title}"
+        if author:
+            q += f" inauthor:{author}"
+        url = f"{self.base_url}/volumes?q={q.replace(' ', '+')}"
+        response = await self.http_client.get(self.get_authorized_url(url))
+        response.raise_for_status()
+
+        res = response.json()
+        if res["totalItems"] == 0:
+            raise ValueError(f"No books found for title: {title}")
+
+        return Volume.model_validate(res["items"][0])
+

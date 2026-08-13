@@ -60,7 +60,9 @@ class EnrichmentQueue(Base):
     __tablename__ = "enrichment_queue"
 
     book_id: Mapped[str] = mapped_column(String, primary_key=True)
-    isbn: Mapped[str] = mapped_column(String, nullable=False)
+    isbn: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    author: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     enqueued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     attempts: Mapped[int] = mapped_column(SmallInteger, nullable=False, server_default="0")
     last_error: Mapped[Optional[str]] = mapped_column(Text)

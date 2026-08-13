@@ -12,13 +12,16 @@ from backend.infra.db import AsyncSession, engine
 from backend.infra.google_books.client import GoogleBooksClient
 from backend.infra.models import Base
 from backend.jobs.rating_enrichment import RatingEnrichmentManager
+from backend.jobs.rating_matchers import CompositeRatingMatcher, IsbnMatcher, TitleAuthorMatcher
 
 
 async def run_enrichment_worker():
     try:
         async with httpx.AsyncClient(timeout=30.0) as http_client, AsyncSession() as db:
             logger.info("Rating enrichment worker started")
-            manager = RatingEnrichmentManager(db, GoogleBooksClient(http_client))
+            client = GoogleBooksClient(http_client)
+            matcher = CompositeRatingMatcher([IsbnMatcher(client), TitleAuthorMatcher(client)])
+            manager = RatingEnrichmentManager(db, matcher)
             await manager.run()
     except asyncio.CancelledError:
         pass
@@ -26,7 +29,7 @@ async def run_enrichment_worker():
         logger.exception("Rating enrichment worker failed")
 
 
-def log_worker_failure(task: asyncio.Task) -> None:
+def worker_failur(task: asyncio.Task) -> None:
     if task.cancelled():
         return
     exc = task.exception()
@@ -43,7 +46,7 @@ async def lifespan(app: FastAPI):
     await RedisStorage().test_connection()
 
     enrichment_worker = asyncio.create_task(run_enrichment_worker())
-    enrichment_worker.add_done_callback(log_worker_failure)
+    enrichment_worker.add_done_callback(worker_failur)
     
     yield
    

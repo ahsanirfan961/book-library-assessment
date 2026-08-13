@@ -7,21 +7,21 @@ from loguru import logger
 from sqlalchemy import delete, select
 from sqlalchemy.dialects.postgresql import insert
 from backend.infra.db import AsyncSession
-from backend.infra.google_books.client import GoogleBooksClient
 from backend.infra.models import EnrichmentQueue, Rating, RatingStatus
+from backend.jobs.rating_matchers import CompositeRatingMatcher
 
 
 class RatingEnrichmentManager:
 
-    def __init__(self, db: AsyncSession, google_books_client: GoogleBooksClient):
+    def __init__(self, db: AsyncSession, rating_matcher: CompositeRatingMatcher):
         self.db = db
-        self.google_books_client = google_books_client
+        self.rating_matcher = rating_matcher
 
     async def run(self):
         logger.info("Rating enrichment loop running")
         while True:
             await self.enrich_rating()
-            await asyncio.sleep(1.1)
+            await asyncio.sleep(1.25)
 
     async def enrich_rating(self):
         
@@ -34,11 +34,9 @@ class RatingEnrichmentManager:
                 await self.db.rollback()
                 return
 
-            try:
-                volume = await self.google_books_client.search_by_isbn(enrichment_queue.isbn)
-            except ValueError as e:
+            volume = await self.rating_matcher.match(enrichment_queue)
+            if not volume:
                 logger.error(f"No match for rating found for book {enrichment_queue.book_id}")
-                volume = None
 
             if volume and volume.volumeInfo.averageRating is not None:
                 avg_rating = volume.volumeInfo.averageRating
