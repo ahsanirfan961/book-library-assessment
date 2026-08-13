@@ -1,7 +1,6 @@
 @import "tailwindcss";
-@font-face {
-  font-family: 'GoCake';
-  src: url('./assets/fonts/GoCake.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
+
+body {
+  font-family: 'Acme', sans-serif;
+  background-color: #fff8e7;
 }

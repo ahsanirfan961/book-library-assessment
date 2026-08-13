@@ -92,50 +92,48 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen md:h-screen md:min-h-0 bg-gray-100 flex flex-col md:overflow-hidden">
-      <nav className="bg-blue-600 text-white px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4 shadow-md shrink-0">
-        <h1 className="text-2xl md:text-3xl font-gocake font-bold text-white text-center md:text-left">Book Library</h1>
+    <div className="min-h-screen" style={{ background: "#fff8e7" }}>
+      <nav className="bg-blue-600 text-white px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4 shadow">
+        <h1 className="text-3xl font-bold">📚 Book Library</h1>
         <div className="w-full md:max-w-md">
           <SearchBar onSearch={handleSearch} loading={loading} />
         </div>
       </nav>
 
-      <div className="flex-1 p-6 md:overflow-hidden min-h-0">
-        {error && <div className="text-center py-4 text-red-500 font-semibold">{error}</div>}
+      <div className="p-6 max-w-6xl mx-auto">
+        {error && <p className="text-red-600 text-center mb-4 bg-red-50 p-2 rounded">{error}</p>}
 
-        <div className="grid grid-cols-12 gap-6 md:h-full">
-          <aside className="col-span-12 md:col-span-3 bg-white shadow rounded p-4 font-gocake flex flex-col md:h-full md:overflow-hidden">
-            <div className="flex justify-between items-center md:block md:text-center shrink-0">
-              <h2 className="font-semibold text-lg md:mb-4">Categories</h2>
+        <div className="flex flex-col md:flex-row gap-6">
+          <aside className="md:w-56 bg-white rounded p-4 shadow-md">
+            <div className="flex justify-between items-center md:block md:text-center">
+              <h2 className="text-lg font-bold mb-2">Categories</h2>
               <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="md:hidden bg-blue-50 text-blue-600 px-3 py-1 rounded text-sm font-semibold hover:bg-blue-100 transition-colors"
+                className="md:hidden text-sm bg-gray-100 px-2 py-1 rounded"
               >
                 {isSidebarOpen ? "Hide" : "Show"}
               </button>
             </div>
-            <ul className={`${isSidebarOpen ? "block" : "hidden"} md:block space-y-2 text-gray-700 mt-4 md:mt-0 text-center max-h-64 md:max-h-none overflow-y-auto pr-1 md:flex-1`}>
+            <ul className={`${isSidebarOpen ? "block" : "hidden"} md:block mt-3 text-center text-gray-700`}>
               <li 
                 onClick={handleClearCategory}
-                className={`hover:text-blue-500 cursor-pointer py-2 md:py-0 border-b border-gray-100 md:border-b-0 last:border-b-0 ${!selectedCategory ? 'text-blue-600 font-semibold' : ''}`}
+                className={`py-2 cursor-pointer rounded ${!selectedCategory ? 'bg-blue-100 text-blue-700 font-bold' : 'hover:bg-gray-100'}`}
               >
                 All Books (Popular)
               </li>
               {categories.map((cats) => (
                 <li key={cats.slug} onClick={() => handleCategoryClick(cats.slug)}
-                  className={`hover:text-blue-500 cursor-pointer py-2 md:py-0 border-b border-gray-100 md:border-b-0 last:border-b-0 ${selectedCategory === cats.slug ? 'text-blue-600 font-semibold' : ''}`}
+                  className={`py-2 cursor-pointer rounded ${selectedCategory === cats.slug ? 'bg-blue-100 text-blue-700 font-bold' : 'hover:bg-gray-100'}`}
                 >
                   {cats.name}
                 </li>
               ))}
             </ul>
           </aside>
-          <main className="col-span-12 md:col-span-9 font-gocake md:h-full md:overflow-y-auto md:pr-2">
+          <main className="flex-1">
             {loading ? (
-              <div className="w-full">
-                <div className="flex justify-center py-4">
-                  <Spinner />
-                </div>
+              <div>
+                <div className="text-center py-4"><Spinner /></div>
                 <BookLoadSkeleton />
               </div>
             ) : (

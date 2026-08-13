@@ -3,7 +3,7 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-            gocake: ['GoCake', 'sans-serif'],
+            acme: ['Acme', 'sans-serif'],
             },
         },
     },
