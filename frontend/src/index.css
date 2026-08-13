@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@config "../tailwind.config.js";
 @font-face {
   font-family: 'GoCake';
   src: url('./assets/fonts/GoCake.ttf') format('truetype');
