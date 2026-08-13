@@ -22,6 +22,7 @@ def to_book_summary(work: Work) -> Book:
         authors=[SAuthor(id=_ol_key(a.key), name=a.name) for a in work.authors],
         firstPublishYear=work.first_publish_year,
         coverUrl=cover_url(work.cover_id),
+        isbn=work.availability.isbn if work.availability else None,
         rating=None,
         ratingStatus=RatingStatus.unavailable,
     )

@@ -1,10 +1,22 @@
+import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from backend.api import books, subjects
 from backend.infra.cache import RedisStorage
-from backend.infra.db import engine
+from backend.infra.db import AsyncSession, engine
+from backend.infra.google_books.client import GoogleBooksClient, get_gb_http_client
 from backend.infra.models import Base
+from backend.jobs.rating_enrichment import RatingEnrichmentManager
+
+
+async def run_enrichment_worker():
+    async with get_gb_http_client() as http_client, AsyncSession() as db:
+        manager = RatingEnrichmentManager(db, GoogleBooksClient(http_client))
+        try:
+            await manager.run()
+        except asyncio.CancelledError:
+            pass  
 
 
 @asynccontextmanager
@@ -14,9 +26,14 @@ async def lifespan(app: FastAPI):
         await conn.run_sync(Base.metadata.create_all)
     
     await RedisStorage().test_connection()
+
+    enrichment_worker = asyncio.create_task(run_enrichment_worker())
     
     yield
    
+    enrichment_worker.cancel()
+    await enrichment_worker
+    
     await engine.dispose()
 
 

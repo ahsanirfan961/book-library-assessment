@@ -59,7 +59,7 @@ class Rating(Base):
 class EnrichmentQueue(Base):
     __tablename__ = "enrichment_queue"
 
-    book_id: Mapped[int] = mapped_column(ForeignKey("ratings.book_id"), primary_key=True)
+    book_id: Mapped[str] = mapped_column(String, primary_key=True)
     isbn: Mapped[str] = mapped_column(String, nullable=False)
     enqueued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     attempts: Mapped[int] = mapped_column(SmallInteger, nullable=False, server_default="0")

@@ -28,6 +28,7 @@ class Book(BaseModel):
     authors: List[Author]
     firstPublishYear: Optional[int] = None
     coverUrl: Optional[str] = None
+    isbn: Optional[str] = None
     rating: Optional[Rating] = None
     ratingStatus: RatingStatus
 
