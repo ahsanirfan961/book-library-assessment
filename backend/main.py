@@ -2,7 +2,7 @@ import asyncio
 from contextlib import asynccontextmanager
 
 import httpx
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
 from loguru import logger
 from sqlalchemy import text
 
@@ -13,6 +13,13 @@ from backend.infra.google_books.client import GoogleBooksClient
 from backend.infra.models import Base
 from backend.jobs.rating_enrichment import RatingEnrichmentManager
 from backend.jobs.rating_matchers import CompositeRatingMatcher, IsbnMatcher, TitleAuthorMatcher
+from fastapi.middleware.cors import CORSMiddleware
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+
+APP_API_KEY = os.getenv("APP_API_KEY")
 
 
 async def run_enrichment_worker():
@@ -60,8 +67,29 @@ app = FastAPI(lifespan=lifespan)
 app.include_router(books.router, prefix="/api/v1")
 app.include_router(subjects.router, prefix="/api/v1")
 
+# this is for security 
+@app.middleware("http")
+async def check_app_key(request: Request, call_next):
+    if request.url.path.startswith("/api/"): 
+        if request.headers.get("X-App-Key") != APP_API_KEY:
+            raise HTTPException(status_code=403, detail="Forbidden")
+    return await call_next(request)
+
+
+# this is also for security (CORS)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")
 def read_root():
     return {"status": "running"}
+
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}

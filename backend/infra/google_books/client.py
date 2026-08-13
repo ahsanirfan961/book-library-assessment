@@ -34,12 +34,14 @@ class GoogleBooksClient:
                 last = response
                 await asyncio.sleep(2 ** i)
                 continue
+
             response.raise_for_status()
+            
             return response.json()
 
         if last:
             last.raise_for_status()
-            
+
         raise httpx.HTTPError("google books request failed")
 
     async def search_by_isbn(self, isbn: str) -> Volume:
