@@ -4,7 +4,8 @@
 import asyncio
 
 from loguru import logger
-from sqlalchemy import delete, insert, select, update
+from sqlalchemy import delete, select
+from sqlalchemy.dialects.postgresql import insert
 from backend.infra.db import AsyncSession
 from backend.infra.google_books.client import GoogleBooksClient
 from backend.infra.models import EnrichmentQueue, Rating, RatingStatus
@@ -17,6 +18,7 @@ class RatingEnrichmentManager:
         self.google_books_client = google_books_client
 
     async def run(self):
+        logger.info("Rating enrichment loop running")
         while True:
             await self.enrich_rating()
             await asyncio.sleep(1)
@@ -29,7 +31,6 @@ class RatingEnrichmentManager:
             enrichment_queue: EnrichmentQueue | None = result.scalars().first()
 
             if not enrichment_queue:
-                logger.info("No enrichment queue found")
                 await self.db.rollback()
                 return
 
@@ -39,13 +40,14 @@ class RatingEnrichmentManager:
                 logger.error(f"No match for rating found for book {enrichment_queue.book_id}")
                 volume = None
 
-            if volume:
+            if volume and volume.volumeInfo.averageRating is not None:
                 avg_rating = volume.volumeInfo.averageRating
                 ratings_count = volume.volumeInfo.ratingsCount or 0
+                status = RatingStatus.ok
             else:
                 avg_rating = None
                 ratings_count = 0
-                
+                status = RatingStatus.no_match
 
             upsert_stmt = (
                 insert(Rating)
@@ -53,14 +55,14 @@ class RatingEnrichmentManager:
                     book_id=enrichment_queue.book_id,
                     average_rating=avg_rating,
                     ratings_count=ratings_count,
-                    status=RatingStatus.ok if volume else RatingStatus.no_match,
+                    status=status,
                 )
                 .on_conflict_do_update(
-                    index_elements=[Rating.book_id], 
+                    index_elements=[Rating.book_id],
                     set_={
                         "average_rating": avg_rating,
                         "ratings_count": ratings_count,
-                        "status": RatingStatus.ok if volume else RatingStatus.no_match,
+                        "status": status,
                     },
                 )
             )

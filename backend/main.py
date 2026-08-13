@@ -1,23 +1,37 @@
 import asyncio
 from contextlib import asynccontextmanager
+
+import httpx
 from fastapi import FastAPI
+from loguru import logger
 from sqlalchemy import text
 
 from backend.api import books, subjects
 from backend.infra.cache import RedisStorage
 from backend.infra.db import AsyncSession, engine
-from backend.infra.google_books.client import GoogleBooksClient, get_gb_http_client
+from backend.infra.google_books.client import GoogleBooksClient
 from backend.infra.models import Base
 from backend.jobs.rating_enrichment import RatingEnrichmentManager
 
 
 async def run_enrichment_worker():
-    async with get_gb_http_client() as http_client, AsyncSession() as db:
-        manager = RatingEnrichmentManager(db, GoogleBooksClient(http_client))
-        try:
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as http_client, AsyncSession() as db:
+            logger.info("Rating enrichment worker started")
+            manager = RatingEnrichmentManager(db, GoogleBooksClient(http_client))
             await manager.run()
-        except asyncio.CancelledError:
-            pass  
+    except asyncio.CancelledError:
+        pass
+    except Exception:
+        logger.exception("Rating enrichment worker failed")
+
+
+def log_worker_failure(task: asyncio.Task) -> None:
+    if task.cancelled():
+        return
+    exc = task.exception()
+    if exc:
+        logger.error(f"Enrichment worker stopped with error: {exc}")
 
 
 @asynccontextmanager
@@ -29,6 +43,7 @@ async def lifespan(app: FastAPI):
     await RedisStorage().test_connection()
 
     enrichment_worker = asyncio.create_task(run_enrichment_worker())
+    enrichment_worker.add_done_callback(log_worker_failure)
     
     yield
    

@@ -22,7 +22,8 @@ class GoogleBooksClient:
         self.api_key = GOOGLE_BOOKS_API_KEY
 
     def get_authorized_url(self, url: str) -> str:
-        return f"{url}?key={self.api_key}"
+        sep = "&" if "?" in url else "?"
+        return f"{url}{sep}key={self.api_key}"
 
     async def search_by_isbn(self, isbn: str) -> Volume:
         url = f"{self.base_url}/volumes?q=isbn:{isbn}"
@@ -33,6 +34,6 @@ class GoogleBooksClient:
         if res["totalItems"] == 0:
             raise ValueError(f"No books found for ISBN: {isbn}")
 
-        return Volume.model_validate_json(res["items"][0])
+        return Volume.model_validate(res["items"][0])
 
     
