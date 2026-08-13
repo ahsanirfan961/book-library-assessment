@@ -21,7 +21,7 @@ class RatingEnrichmentManager:
         logger.info("Rating enrichment loop running")
         while True:
             await self.enrich_rating()
-            await asyncio.sleep(1)
+            await asyncio.sleep(1.1)
 
     async def enrich_rating(self):
         

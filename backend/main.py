@@ -54,13 +54,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
-
-api = FastAPI()
-api.include_router(books.router)
-api.include_router(subjects.router)
-
-
-app.mount("/api/v1", api)
+app.include_router(books.router, prefix="/api/v1")
+app.include_router(subjects.router, prefix="/api/v1")
 
 
 
