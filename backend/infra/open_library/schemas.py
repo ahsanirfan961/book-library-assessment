@@ -25,6 +25,7 @@ class Work(BaseModel):
     subjects: list[str] = Field(default_factory=list, validation_alias=AliasChoices("subject", "subjects"))
     availability: Optional[Availability] = None
     first_publish_year: Optional[int] = None
+    description: Optional[str] = None
 
     @model_validator(mode="before")
     @classmethod

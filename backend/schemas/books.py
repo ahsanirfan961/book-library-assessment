@@ -38,11 +38,11 @@ class SubjectRef(BaseModel):
 
 
 class BookDetail(Book):
-    editionCount: Optional[int] = 0
+    editionCount: int = Field(default=0)
     language: Optional[str] = None
     description: Optional[str] = None
     coverUrlLarge: Optional[str] = None
-    subjects: list[SubjectRef]
+    subjects: list[SubjectRef] = Field(default_factory=list)
     editions: list[Edition] = Field(default_factory=list, max_length=5)
 
 
