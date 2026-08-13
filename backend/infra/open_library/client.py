@@ -1,26 +1,52 @@
 import httpx
 
 from backend.infra.open_library.schemas import SubjectWorks, Work
+from backend.schemas.common import Paginated
+
+
+async def get_ol_http_client():
+    async with httpx.AsyncClient() as client:
+        try:
+            yield client
+        finally:
+            await client.aclose()
 
 class OpenLibraryClient:
     def __init__(self, http_client: httpx.AsyncClient) -> None:
         self.http_client = http_client
         self.base_url = "https://openlibrary.org"
 
-    async def get_subject_works(self, subject: str) -> SubjectWorks:
-        url = f"{self.base_url}/subjects/{subject}.json"
+    async def get_subject_works(self, subject: str, limit: int = 10, offset: int = 0) -> SubjectWorks:
+        url = f"{self.base_url}/subjects/{subject}.json?limit={limit}&offset={offset}"
         response = await self.http_client.get(url)
         response.raise_for_status()
-        return SubjectWorks.model_validate_json(response.json())
+        res = response.json()
+        return SubjectWorks(
+            key=res["key"],
+            name=res["name"],
+            subject_type=res["subject_type"],
+            work_count=res["work_count"],
+            works=Paginated(
+                limit=limit,
+                offset=offset,
+                total=res["work_count"],
+                items=[Work.model_validate(work) for work in res["works"]]
+        ))
     
-    async def search_books(self, query: str) -> list[Work]:
+    async def search_books(self, query: str) -> Paginated[Work]:
         url = f"{self.base_url}/search/books.json"
         response = await self.http_client.get(url, params={"q": query})
         response.raise_for_status()
-        return [Work.model_validate_json(work) for work in response.json()["docs"]]
+        res = response.json()
+        return Paginated(
+            limit=res["limit"],
+            offset=res["offset"],
+            total=res["total"],
+            items=[Work.model_validate(work) for work in res["docs"]]
+        )
     
-    async def get_book(self, book_id: str) -> Work:
-        url = f"{self.base_url}/books/{book_id}.json"
+    async def get_work(self, book_id: str) -> Work:
+        url = f"{self.base_url}/works/{book_id}.json"
         response = await self.http_client.get(url)
         response.raise_for_status()
-        return Work.model_validate_json(response.json())
+        return Work.model_validate(response.json())

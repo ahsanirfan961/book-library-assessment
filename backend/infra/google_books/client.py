@@ -8,7 +8,14 @@ load_dotenv()
 
 GOOGLE_BOOKS_API_KEY = os.getenv("GOOGLE_BOOKS_API_KEY")
 
-class OpenLibraryClient:
+async def get_gb_http_client():
+    async with httpx.AsyncClient() as client:
+        try:
+            yield client
+        finally:
+            await client.aclose()
+
+class GoogleBooksClient:
     def __init__(self, http_client: httpx.AsyncClient) -> None:
         self.http_client = http_client
         self.base_url = "https://www.googleapis.com/books/v1"

@@ -16,14 +16,13 @@ class Rating(BaseModel):
     asOf: Optional[date] = None
 
 
-class EditionSummary(BaseModel):
+class Edition(BaseModel):
     id: str
-    publisher: Optional[str] = None
     publishYear: Optional[int] = None
     isbn13: Optional[str] = None
 
 
-class BookSummary(BaseModel):
+class Book(BaseModel):
     id: str
     title: str
     authors: List[Author]
@@ -36,20 +35,14 @@ class BookSummary(BaseModel):
 class SubjectRef(BaseModel):
     slug: str
     name: str
-    kind: str = "subject"
 
 
-class BookDetail(BookSummary):
-    editionCount: int
+class BookDetail(Book):
+    editionCount: Optional[int] = 0
     language: Optional[str] = None
     description: Optional[str] = None
     coverUrlLarge: Optional[str] = None
     subjects: list[SubjectRef]
-    editions: list[EditionSummary] = Field(default_factory=list, max_length=5)
+    editions: list[Edition] = Field(default_factory=list, max_length=5)
 
 
-
-class BookListResponse(BaseModel):
-    items: list[BookSummary]
-    nextCursor: Optional[str]
-    totalEstimate: Optional[int] = None
