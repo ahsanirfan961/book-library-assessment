@@ -1,3 +1,4 @@
+import httpx
 from backend.infra.google_books.client import GoogleBooksClient
 from backend.infra.google_books.schemas import Volume
 from backend.infra.models import EnrichmentQueue
@@ -17,7 +18,7 @@ class IsbnMatcher(RatingMatcher):
             return None
         try:
             return await self.client.search_by_isbn(item.isbn)
-        except ValueError:
+        except (ValueError, httpx.HTTPStatusError):
             return None
 
 

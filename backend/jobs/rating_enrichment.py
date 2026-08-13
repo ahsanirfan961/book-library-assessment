@@ -35,6 +35,8 @@ class RatingEnrichmentManager:
                 return
 
             volume = await self.rating_matcher.match(enrichment_queue)
+
+            
             if not volume:
                 logger.error(f"No match for rating found for book {enrichment_queue.book_id}")
 

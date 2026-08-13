@@ -1,7 +1,7 @@
+import asyncio
 import httpx
 import os
 from backend.infra.google_books.schemas import Volume
-from backend.infra.open_library.schemas import SubjectWorks, Work
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -25,12 +25,26 @@ class GoogleBooksClient:
         sep = "&" if "?" in url else "?"
         return f"{url}{sep}key={self.api_key}"
 
+    async def get_result(self, url: str):
+        last = None
+        for i in range(3):
+            response = await self.http_client.get(self.get_authorized_url(url))
+
+            if response.status_code in (429, 503):
+                last = response
+                await asyncio.sleep(2 ** i)
+                continue
+            response.raise_for_status()
+            return response.json()
+
+        if last:
+            last.raise_for_status()
+            
+        raise httpx.HTTPError("google books request failed")
+
     async def search_by_isbn(self, isbn: str) -> Volume:
         url = f"{self.base_url}/volumes?q=isbn:{isbn}"
-        response = await self.http_client.get(self.get_authorized_url(url))
-        response.raise_for_status()
-
-        res = response.json()
+        res = await self.get_result(url)
         if res["totalItems"] == 0:
             raise ValueError(f"No books found for ISBN: {isbn}")
 
@@ -41,10 +55,7 @@ class GoogleBooksClient:
         if author:
             q += f" inauthor:{author}"
         url = f"{self.base_url}/volumes?q={q.replace(' ', '+')}"
-        response = await self.http_client.get(self.get_authorized_url(url))
-        response.raise_for_status()
-
-        res = response.json()
+        res = await self.get_result(url)
         if res["totalItems"] == 0:
             raise ValueError(f"No books found for title: {title}")
 
