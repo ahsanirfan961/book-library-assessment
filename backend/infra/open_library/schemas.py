@@ -58,6 +58,13 @@ class Work(BaseModel):
         if "covers" in data and not data.get("cover_id"):
             data["cover_id"] = data["covers"][0] if data["covers"] else None
 
+        if data.get("isbn") and not (data.get("availability") or {}).get("isbn"):
+            isbns = data["isbn"]
+            if isinstance(isbns, list) and isbns:
+                availability = data.get("availability") or {}
+                availability["isbn"] = isbns[0]
+                data["availability"] = availability
+
         return data
 
 

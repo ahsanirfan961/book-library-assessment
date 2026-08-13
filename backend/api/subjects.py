@@ -2,11 +2,14 @@ from typing import Annotated, Literal, Optional
 from fastapi import APIRouter, Depends, Response
 import httpx
 
+from backend.infra.cache import RedisStorage
 from backend.infra.db import AsyncSession, get_db
 from backend.infra.open_library.client import OpenLibraryClient, get_ol_http_client
 from backend.schemas.books import Book
 from backend.schemas.common import Paginated
 from backend.schemas.subjects import Subject
+from backend.services.cached_book import CachedBookService
+from backend.services.ol_book import OLBookService
 from backend.services.rated_book import RatedBookService
 
 
@@ -37,4 +40,4 @@ async def subject_books(
     limit: int = 12,
     offset: int = 0,
 ):
-    return await RatedBookService(db, OpenLibraryClient(ol_http_client)).get_books(slug, limit, offset)
+    return await CachedBookService(RatedBookService(OLBookService(db, OpenLibraryClient(ol_http_client)), db), RedisStorage()).get_books(slug, limit, offset)

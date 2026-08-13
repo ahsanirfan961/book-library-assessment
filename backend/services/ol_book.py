@@ -27,7 +27,7 @@ class OLBookService(ABookService):
                 items=[to_book_summary(work) for work in subject_works.works.items]
             )
         except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+            raise HTTPException(status_code=500, detail=str(e) or repr(e))
 
     async def search_books(self, query: str, limit: int = 10, offset: int = 0) -> Paginated[Book]:
         try:
@@ -39,14 +39,14 @@ class OLBookService(ABookService):
                 items=[to_book_summary(work) for work in works.items]
             )
         except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+            raise HTTPException(status_code=500, detail=str(e) or repr(e))
     
     async def get_book_detail(self, book_id: str) -> BookDetail:
         try:
             work = await self.open_library_client.get_work(book_id)
             return to_book_detail(work)
         except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+            raise HTTPException(status_code=500, detail=str(e) or repr(e))
     
     async def get_popular_books(self, limit: int = 6, offset: int = 0) -> Paginated[Book]:
         try:
@@ -58,7 +58,7 @@ class OLBookService(ABookService):
                 items=[to_book_summary(work) for work in works.items]
             )
         except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+            raise HTTPException(status_code=500, detail=str(e) or repr(e))
 
 
 

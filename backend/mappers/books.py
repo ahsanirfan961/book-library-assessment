@@ -23,6 +23,8 @@ def map_rating(row: Optional[RatingRow]) -> tuple[Optional[Rating], RatingStatus
         return None, RatingStatus.no_match
 
     if row.status in (DbRatingStatus.ok, DbRatingStatus.stale):
+        if row.average_rating is None:
+            return None, RatingStatus.unavailable
         return (
             Rating(
                 average=float(row.average_rating),

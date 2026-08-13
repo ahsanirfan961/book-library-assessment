@@ -28,6 +28,7 @@ class Book(BaseModel):
     authors: List[Author]
     firstPublishYear: Optional[int] = None
     coverUrl: Optional[str] = None
+    isbn: Optional[str] = None
     rating: Optional[Rating] = None
     ratingStatus: RatingStatus
 
@@ -43,6 +44,5 @@ class BookDetail(Book):
     description: Optional[str] = None
     coverUrlLarge: Optional[str] = None
     subjects: list[SubjectRef] = Field(default_factory=list)
-    editions: list[Edition] = Field(default_factory=list, max_length=5)
 
 
