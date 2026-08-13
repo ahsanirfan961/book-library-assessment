@@ -55,10 +55,10 @@ class OpenLibraryClient:
         url = f"{self.base_url}/trending/weekly.json"
         response = await self.http_client.get(url, params={"limit": limit, "offset": offset})
         response.raise_for_status()
-        res = response.json()
+        works = response.json().get("works", [])
         return Paginated(
-            limit=res["limit"],
-            offset=res["offset"],
-            total=res["total"],
-            items=[Work.model_validate(work) for work in res["docs"]]
+            limit=limit,
+            offset=offset,
+            total=len(works),
+            items=[Work.model_validate(work) for work in works],
         )

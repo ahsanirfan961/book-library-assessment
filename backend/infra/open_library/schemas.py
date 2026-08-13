@@ -29,17 +29,35 @@ class Work(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def normalize_authors(cls, data):
-        if isinstance(data, dict) and "authors" in data:
+    def normalize(cls, data):
+        if not isinstance(data, dict):
+            return data
+
+        if data.get("cover_i") is not None and data.get("cover_id") is None:
+            data["cover_id"] = data["cover_i"]
+
+        if not data.get("authors") and data.get("author_name"):
+            keys = data.get("author_key") or []
+            data["authors"] = [
+                {"key": k, "name": n}
+                for k, n in zip(keys, data["author_name"], strict=False)
+            ]
+
+        if isinstance(data.get("description"), dict):
+            data["description"] = data["description"].get("value")
+
+        if "authors" in data:
             normalized = []
             for a in data["authors"]:
-                if "author" in a: 
+                if "author" in a:
                     normalized.append({"key": a["author"]["key"], "name": ""})
-                else:  
+                else:
                     normalized.append(a)
             data["authors"] = normalized
-        if isinstance(data, dict) and "covers" in data and not data.get("cover_id"):
+
+        if "covers" in data and not data.get("cover_id"):
             data["cover_id"] = data["covers"][0] if data["covers"] else None
+
         return data
 
 
