@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import SearchBar from "./components/SearchBar";
 import BookGrid from "./components/BookGrid";
 import BookModal from "./components/BookModal";
+import Spinner, { BookLoadSkeleton } from "./components/Spinner";
 import { fetchBooks, fetchCategories, fetchBooksByCategory, fetchBookDetail } from "./api/books";
 
 export default function App() {
@@ -14,6 +15,7 @@ export default function App() {
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedBook, setSelectedBook] = useState(null);
+  const [bookLoading, setBookLoading] = useState(false);
 
   useEffect(() => {
     async function initApp() {
@@ -73,6 +75,8 @@ export default function App() {
 
   async function handleBookClick(book) {
     if (!book || !book.id) return;
+    setSelectedBook(book);
+    setBookLoading(true);
     try {
       const detail = await fetchBookDetail(book.id);
       setSelectedBook(detail);
@@ -82,6 +86,8 @@ export default function App() {
         ...book,
         description: "Failed to load detailed description from the server."
       });
+    } finally {
+      setBookLoading(false);
     }
   }
 
@@ -90,12 +96,11 @@ export default function App() {
       <nav className="bg-blue-600 text-white px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4 shadow-md shrink-0">
         <h1 className="text-2xl md:text-3xl font-gocake font-bold text-white text-center md:text-left">Book Library</h1>
         <div className="w-full md:max-w-md">
-          <SearchBar onSearch={handleSearch} />
+          <SearchBar onSearch={handleSearch} loading={loading} />
         </div>
       </nav>
 
       <div className="flex-1 p-6 md:overflow-hidden min-h-0">
-        {loading && <div className="text-center py-4 text-blue-600 font-semibold">Loading books...</div>}
         {error && <div className="text-center py-4 text-red-500 font-semibold">{error}</div>}
 
         <div className="grid grid-cols-12 gap-6 md:h-full">
@@ -126,11 +131,20 @@ export default function App() {
             </ul>
           </aside>
           <main className="col-span-12 md:col-span-9 font-gocake md:h-full md:overflow-y-auto md:pr-2">
-            {!loading && <BookGrid books={filteredBooks} onBookClick={handleBookClick} />}
+            {loading ? (
+              <div className="w-full">
+                <div className="flex justify-center py-4">
+                  <Spinner />
+                </div>
+                <BookLoadSkeleton />
+              </div>
+            ) : (
+              <BookGrid books={filteredBooks} onBookClick={handleBookClick} />
+            )}
           </main>
         </div>
       </div>
-      <BookModal book={selectedBook} onClose={() => setSelectedBook(null)} />
+      <BookModal book={selectedBook} loading={bookLoading} onClose={() => setSelectedBook(null)} />
     </div>
   );
 }

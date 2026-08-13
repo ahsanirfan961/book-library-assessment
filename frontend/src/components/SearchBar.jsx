@@ -1,6 +1,7 @@
 import { useState } from "react";
+import Spinner from "./Spinner";
 
-export default function SearchBar({ onSearch }) {
+export default function SearchBar({ onSearch, loading }) {
     const [query, setQuery] = useState("");
 
     function handleSubmit(e) {
@@ -19,9 +20,10 @@ export default function SearchBar({ onSearch }) {
             />
             <button
                 type="submit"
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                disabled={loading}
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-60 flex items-center gap-2"
             >
-                Search
+                {loading ? <Spinner small /> : "Search"}
             </button>
         </form>
     );

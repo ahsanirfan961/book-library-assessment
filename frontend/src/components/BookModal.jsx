@@ -1,9 +1,16 @@
-export default function BookModal({ book, onClose }) {
+import Spinner from "./Spinner";
+
+export default function BookModal({ book, onClose, loading }) {
   if (!book) return null;
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden relative">
+        {loading && (
+          <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-20">
+            <Spinner />
+          </div>
+        )}
         <button 
           onClick={onClose}
           className="absolute top-4 right-4 bg-white/80 hover:bg-gray-100 text-gray-800 rounded-full p-2 shadow z-10 transition-colors cursor-pointer"
