@@ -52,13 +52,13 @@ async def lifespan(app: FastAPI):
     
     await RedisStorage().test_connection()
 
-    # enrichment_worker = asyncio.create_task(run_enrichment_worker())
-    # enrichment_worker.add_done_callback(worker_failur)
+    enrichment_worker = asyncio.create_task(run_enrichment_worker())
+    enrichment_worker.add_done_callback(worker_failur)
     
     yield
    
-    # enrichment_worker.cancel()
-    # await enrichment_worker
+    enrichment_worker.cancel()
+    await enrichment_worker
 
     await engine.dispose()
 
