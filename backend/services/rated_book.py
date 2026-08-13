@@ -89,8 +89,10 @@ class RatedBookService(ABookService):
                 total=page.total,
                 items=self.attach_ratings(page.items, ratings),
             )
+        except HTTPException:
+            raise
         except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+            raise HTTPException(status_code=500, detail=str(e) or repr(e))
 
     async def search_books(self, query: str, limit: int = 10, offset: int = 0) -> Paginated[Book]:
         try:
@@ -103,8 +105,10 @@ class RatedBookService(ABookService):
                 total=page.total,
                 items=self.attach_ratings(page.items, ratings),
             )
+        except HTTPException:
+            raise
         except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+            raise HTTPException(status_code=500, detail=str(e) or repr(e))
 
     async def get_book_detail(self, book_id: str) -> BookDetail:
         try:
@@ -112,8 +116,10 @@ class RatedBookService(ABookService):
             await self.ensure_ratings_for_books([book])
             ratings = await self.get_ratings_for_books([book])
             return self.attach_rating(book, ratings[0] if ratings else None)
+        except HTTPException:
+            raise
         except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+            raise HTTPException(status_code=500, detail=str(e) or repr(e))
 
     async def get_popular_books(self, limit: int = 6, offset: int = 0) -> Paginated[Book]:
         try:
@@ -126,5 +132,7 @@ class RatedBookService(ABookService):
                 total=page.total,
                 items=self.attach_ratings(page.items, ratings),
             )
+        except HTTPException:
+            raise
         except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+            raise HTTPException(status_code=500, detail=str(e) or repr(e))

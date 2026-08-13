@@ -29,6 +29,8 @@ class CachedBookService(ABookService):
             await self.redis.set(f"books:{subject}:{limit}:{offset}", books.model_dump_json())
             return books
 
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
@@ -40,6 +42,8 @@ class CachedBookService(ABookService):
             books = await self.book_service.search_books(query, limit, offset)
             await self.redis.set(f"search_books:{query}:{limit}:{offset}", books.model_dump_json())
             return books
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
     
@@ -51,6 +55,8 @@ class CachedBookService(ABookService):
             book = await self.book_service.get_book_detail(book_id)
             await self.redis.set(f"book:{book_id}", book.model_dump_json())
             return book
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
     
@@ -62,6 +68,8 @@ class CachedBookService(ABookService):
             books = await self.book_service.get_popular_books(limit, offset)
             await self.redis.set(f"popular_books:{limit}:{offset}", books.model_dump_json())
             return books
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 

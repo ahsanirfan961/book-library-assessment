@@ -1,6 +1,7 @@
 import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from sqlalchemy import text
 
 from backend.api import books, subjects
 from backend.infra.cache import RedisStorage
@@ -33,7 +34,7 @@ async def lifespan(app: FastAPI):
    
     enrichment_worker.cancel()
     await enrichment_worker
-    
+
     await engine.dispose()
 
 

@@ -5,7 +5,7 @@ from backend.schemas.common import Paginated
 
 
 async def get_ol_http_client():
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=30.0) as client:
         try:
             yield client
         finally:
